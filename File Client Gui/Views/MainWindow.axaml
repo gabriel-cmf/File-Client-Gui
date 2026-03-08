@@ -1,0 +1,148 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:File_Client_Gui.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="File_Client_Gui.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="File_Client_Gui">
+   
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+	<DockPanel>
+		<Menu DockPanel.Dock="Top">
+        
+        <MenuItem Header="File">
+            
+            <MenuItem Header="Open..." 
+                      Command="{Binding Open_download_fileCommand}"
+                      InputGesture="Ctrl+O"/>
+            
+            
+        </MenuItem>
+
+        <MenuItem Header="_Editar">
+            <MenuItem Header="Copiar"/>
+            <MenuItem Header="Colar"/>
+        </MenuItem>
+
+    </Menu>
+
+		<Border DockPanel.Dock="Top" 
+                BorderBrush="#E0E0E0" 
+                BorderThickness="0,0,0,1" 
+                Padding="10">
+                
+            
+            
+        </Border>
+		<TabControl>
+		<TabItem Header="Home">
+			<StackPanel>
+
+				<TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0 5"/>
+
+				<TextBlock Text="Filename" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+				<TextBox Grid.Row="0" Grid.Column="1" Margin="0 5" Text="macuco" Name="Filename"/>
+				<TextBlock Text="File extension" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+				<TextBox Grid.Row="0" Grid.Column="1" Margin="0 5" Text=".jpg" Name="File_ext"/>
+				<Button HorizontalAlignment="Center">Get file</Button>
+				<TextBlock Text="" HorizontalAlignment="Center" VerticalAlignment="Center" Name="file_status"/>
+				<DataGrid Margin="20" ItemsSource="{Binding Ob_tasks}"
+				  IsReadOnly="True"
+				  GridLinesVisibility="All"
+				  BorderThickness="1" BorderBrush="Gray">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="Name"  Binding="{Binding Name}"/>
+						<DataGridTextColumn Header="Filesize" Binding="{Binding Filesize}" />
+						<DataGridTemplateColumn Header="Progress">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate>
+									<StackPanel Orientation="Horizontal" Spacing="5">
+										<ProgressBar Value="{Binding Progress}"
+											 Maximum="100"
+											 Width="100"
+											 Height="30"
+											 ShowProgressText="True"/>
+
+
+
+									</StackPanel>
+								</DataTemplate>
+
+							</DataGridTemplateColumn.CellTemplate>
+
+						</DataGridTemplateColumn>
+						<DataGridCheckBoxColumn Header="Hash" Binding="{Binding Hash_match}" />
+					</DataGrid.Columns>
+					<DataGrid.Styles>
+						<Style Selector="DataGridRow">
+							<Setter Property="ContextMenu">
+								<ContextMenu>
+
+									<MenuItem Header="Delete entry"
+											  Command="{Binding $parent[DataGrid].DataContext.Exclude_entryCommand}"
+											  CommandParameter="{Binding}" />
+
+									
+								</ContextMenu>
+							</Setter>
+						</Style>
+					</DataGrid.Styles>
+
+				</DataGrid>
+				<Button HorizontalAlignment="Center" Margin="0 5" Click="load_file_archive">Load file data</Button>
+
+			</StackPanel>
+		</TabItem>
+
+		<TabItem Header="Files">
+			<StackPanel>
+				<TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0 5"/>
+				
+				<DataGrid Margin="20" ItemsSource="{Binding Fr_info}"
+  IsReadOnly="True"
+  GridLinesVisibility="All"
+  BorderThickness="1" BorderBrush="Gray">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="Name"  Binding="{Binding File_name}"/>
+						<DataGridTextColumn Header="Size"  Binding="{Binding File_size}"/>
+						<DataGridTextColumn Header="Path"  Binding="{Binding Path}"/>
+						<DataGridTextColumn Header="Status"  Binding="{Binding Status}"/>
+					</DataGrid.Columns>
+					<DataGrid.Styles>
+						<Style Selector="DataGridRow">
+							<Setter Property="ContextMenu">
+								<ContextMenu>
+
+									<MenuItem Header="Edit"/>
+									<MenuItem Header="Delete"/>
+
+
+								</ContextMenu>
+							</Setter>
+						</Style>
+					</DataGrid.Styles>
+
+				</DataGrid>
+			</StackPanel>
+		</TabItem>
+	</TabControl>
+	</DockPanel>
+
+	
+    
+
+   
+
+    
+
+
+</Window>

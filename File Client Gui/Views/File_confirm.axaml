@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewmodels="using:File_Client_Gui.ViewModels"
+
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="File_Client_Gui.File_confirm"
+        x:DataType="viewmodels:File_confirm_Model"
+        SizeToContent="WidthAndHeight"
+        Title="File_confirm">
+  
+
+
+  <StackPanel HorizontalAlignment="Stretch" Spacing="12">
+	  <TextBlock Margin="10,10,10,10">Hello!</TextBlock>
+
+      <StackPanel Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
+      <TextBox Margin="10,10,10,10" IsReadOnly="True" Watermark="Press the button to select the download folder" HorizontalAlignment="Stretch" Text="{Binding Folder_path}"></TextBox>
+      <Button Margin="10,10,10,10" HorizontalAlignment="Right" Click="Choose_folder">Choose folder</Button>
+      </StackPanel>
+      <TextBlock Margin="10,10,10,10" Text="{Binding File_name}"></TextBlock>
+      <StackPanel Margin="10,10,10,10" Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
+          <TextBlock Margin="10,10,10,10">Packets: </TextBlock>
+           <TextBlock Margin="10,10,10,10" Text="{Binding Packets}"></TextBlock>
+          </StackPanel>
+		  
+
+
+      
+
+      <StackPanel Margin="10,10,10,10" Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
+      <Button Margin="10,10,10,10" IsEnabled="{Binding Folder_found}" HorizontalAlignment="Left" Click="Confirm">Download</Button>
+          <Button Margin="10,10,10,10" IsEnabled="{Binding Folder_found}" Click="Cancel" HorizontalAlignment="Right">Cancel</Button>
+      </StackPanel>
+         
+  </StackPanel>
+</Window>
