@@ -624,6 +624,32 @@ public class Client_main
         Console.WriteLine("udp worker has started");
     }
 
+    public void create_file_receive_worker(string hash, string ipe)
+    {
+        File_receive_worker uw = new File_receive_worker(this);
+        //uw.target = main_server;
+        //string targer_server = ip + ":" + port;
+        Debug.WriteLine(ipe);
+        //Debug.WriteLine(main_server.ToString());
+        uw.target = IPEndPoint.Parse(ipe);
+        Server_registry sr = new();
+        sr.ip_ad = uw.target.ToString();
+        add_server_to_db(sr);
+
+        uw.target_hash = hash;
+
+        Worker_task_info wti = new();
+
+        uw.create_wti(wti);
+        var mwvm = main_window.DataContext as MainWindowViewModel;
+        mwvm.Ob_tasks.Add(wti);
+
+        uw.ask_for_file2();
+        Task worker_task = Task.Factory.StartNew(() => { uw.pair_up(); });
+        tasks.Add(worker_task);
+        Console.WriteLine("udp worker has started");
+    }
+
 
     public void input_loop()
     {
@@ -703,6 +729,23 @@ public class Client_main
 
         if (newx) 
         { 
+            Server_registry sr = new Server_registry(ipe);
+            know_servers[sr.get_endpoint().Address] = sr;
+        }
+
+
+        return newx;
+    }
+
+    public bool add_server(string adress)
+    {
+
+        IPEndPoint ipe = IPEndPoint.Parse(adress);
+
+        bool newx = ip_set.Add(ipe.Address);
+
+        if (newx)
+        {
             Server_registry sr = new Server_registry(ipe);
             know_servers[sr.get_endpoint().Address] = sr;
         }

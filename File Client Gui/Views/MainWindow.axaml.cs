@@ -113,8 +113,11 @@ namespace File_Client_Gui.Views
                 Dictionary<string, object>? dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
                 if(dict == null) { return; }
 
-                client_main.add_server((string)dict["url"], (string)dict["port"]);
-                client_main.create_file_receive_worker((string)dict["hash"], (string)dict["url"], (string)dict["port"]);
+                //client_main.add_server((string)dict["url"], (string)dict["port"]);
+                //client_main.create_file_receive_worker((string)dict["hash"], (string)dict["url"], (string)dict["port"]);
+
+                client_main.add_server((string)dict["url"]);
+                client_main.create_file_receive_worker((string)dict["hash"], (string)dict["url"]);
 
 
 
