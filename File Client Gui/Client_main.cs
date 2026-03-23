@@ -629,6 +629,7 @@ public class Client_main
         File_receive_worker uw = new File_receive_worker(this);
         //uw.target = main_server;
         //string targer_server = ip + ":" + port;
+        Debug.WriteLine("Target endpoint:");
         Debug.WriteLine(ipe);
         //Debug.WriteLine(main_server.ToString());
         uw.target = IPEndPoint.Parse(ipe);

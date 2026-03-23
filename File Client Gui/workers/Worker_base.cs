@@ -24,8 +24,21 @@ namespace File_test_client.workers
 
         public Worker_base(Client_main ow)
         {
-            udp_agent = new UdpClient(AddressFamily.InterNetworkV6);
-            udp_agent.Client.DualMode = true;
+
+            bool allows_IPv6 = System.Net.Sockets.Socket.OSSupportsIPv6;
+            if(allows_IPv6)
+            {
+                log_message("Creating an ipv6 socket");
+                //udp_agent = new UdpClient(AddressFamily.InterNetworkV6);
+                udp_agent = new UdpClient(AddressFamily.InterNetwork);
+            }
+            else
+            {
+                log_message("Creating an ipv4 socket");
+                udp_agent = new UdpClient(AddressFamily.InterNetwork);
+            }
+
+            //udp_agent.Client.DualMode = true;
             udp_agent.AllowNatTraversal(true);
             owner = ow;
             stopwatch = new();
@@ -88,6 +101,17 @@ namespace File_test_client.workers
         {
             udp_agent.Dispose();
 
+        }
+
+        public void log_message(string msg)
+        {
+            Debug.WriteLine(msg);
+
+            if(owner != null)
+            {
+                owner.add_msg(msg);
+            }
+            
         }
     }
 }

@@ -237,11 +237,29 @@ namespace File_test_client.workers
 
         public File_receive_worker(Client_main ow) : base(ow)
         {
+
+
+            bool allows_IPv6 = System.Net.Sockets.Socket.OSSupportsIPv6;
+            if (allows_IPv6)
+            {
+                log_message("System is ipv6");
+                //udp_agent = new UdpClient(AddressFamily.InterNetworkV6);
+                ep = new IPEndPoint(IPAddress.Any, 1);
+            }
+            else
+            {
+                log_message("System is ipv4 only");
+                ep = new IPEndPoint(IPAddress.Any, 1);
+
+            }
+
+
+
             packets_to_write = new BlockingCollection<w_packet>();
             packets_needed = 0;
             file_buffer = new byte[65536];
             var ips = Dns.GetHostAddresses(Dns.GetHostName())[0];
-            ep = new IPEndPoint(IPAddress.Any, 1);
+           
             ready_for_file = false;
             received_filesize = 0;
             udp_agent.AllowNatTraversal(true);
@@ -317,6 +335,11 @@ namespace File_test_client.workers
             var j_bytes = Encoding.ASCII.GetBytes(json_dict);
             bool hit = true;
 
+            log_message(udp_agent.Client.AddressFamily.ToString());
+            log_message("Target:");
+            log_message(target.ToString());
+
+
             try
             {
                 udp_agent.Send(j_bytes, target);
@@ -332,6 +355,7 @@ namespace File_test_client.workers
 
             if (hit)
             {
+                log_message("Message was sent to server");
                 change_file_status("Request was sent to the server");
                 r_state = received_state.file_requested;
             }
@@ -487,11 +511,7 @@ namespace File_test_client.workers
             owner.add_file_to_db(fr);
         }
 
-        public void log_message(string msg)
-        {
-            Debug.WriteLine(msg);
-            owner.add_msg(msg);
-        }
+        
 
         public void receive_file_data(Task file_write)
         {
