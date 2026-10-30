@@ -1,0 +1,27 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="using:File_Client_Gui"
+        xmlns:vm="using:File_Client_Gui.ViewModels"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="File_Client_Gui.Views.Confirm_window"
+        x:DataType="vm:Confirm_window_model"
+        SizeToContent="WidthAndHeight"
+        Title="Confirm_window">
+
+         <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:Confirm_window_model/>
+    </Design.DataContext>
+
+
+     <StackPanel HorizontalAlignment="Stretch" Spacing="12">
+        <TextBlock Text="{Binding Body_text}"></TextBlock>
+        <StackPanel Margin="10,10,10,10" Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
+          <Button Margin="10,10,10,10" Content="{Binding Button_yes_text}" HorizontalAlignment="Left" Click="Confirm"></Button>
+          <Button Margin="10,10,10,10" Content="{Binding Button_no_text}" Click="Cancel" HorizontalAlignment="Right"></Button>
+          </StackPanel>
+      </StackPanel>
+</Window>

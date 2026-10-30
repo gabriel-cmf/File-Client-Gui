@@ -16,6 +16,12 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
+	    <Window.Styles>
+    <Style Selector="DataGridCell">
+        <Setter Property="Padding" Value="2,0,2,0" /> <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+</Window.Styles>
+
 	<DockPanel>
 		<Menu DockPanel.Dock="Top">
         
@@ -49,16 +55,15 @@
 
 				<TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0 5"/>
 
-				<TextBlock Text="Filename" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-				<TextBox Grid.Row="0" Grid.Column="1" Margin="0 5" Text="macuco" Name="Filename"/>
-				<TextBlock Text="File extension" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-				<TextBox Grid.Row="0" Grid.Column="1" Margin="0 5" Text=".jpg" Name="File_ext"/>
-				<Button HorizontalAlignment="Center">Get file</Button>
+				
 				<TextBlock Text="" HorizontalAlignment="Center" VerticalAlignment="Center" Name="file_status"/>
 				<DataGrid Margin="20" ItemsSource="{Binding Ob_tasks}"
 				  IsReadOnly="True"
 				  GridLinesVisibility="All"
 				  BorderThickness="1" BorderBrush="Gray">
+					<DataGrid.Resources>
+                          
+                    </DataGrid.Resources>
 					<DataGrid.Columns>
 						<DataGridTextColumn Header="Name"  Binding="{Binding Name}"/>
 						<DataGridTextColumn Header="Filesize" Binding="{Binding Filesize}" />
@@ -80,6 +85,7 @@
 							</DataGridTemplateColumn.CellTemplate>
 
 						</DataGridTemplateColumn>
+						<DataGridTextColumn Header="Status" Binding="{Binding Status}" />
 						<DataGridCheckBoxColumn Header="Hash" Binding="{Binding Hash_match}" />
 					</DataGrid.Columns>
 					<DataGrid.Styles>

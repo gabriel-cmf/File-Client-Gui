@@ -14,6 +14,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using File_Client_Gui.data;
 
 
 namespace File_test_server.workers
@@ -50,6 +51,7 @@ namespace File_test_server.workers
         public BlockingCollection<s_packet> packets_to_send;
         public long begin_packet_index;
         public long end_packet_index;
+       
 
         public File_transfer_worker(Client_main  ow) : base(ow)
         {
@@ -61,16 +63,18 @@ namespace File_test_server.workers
             begin_packet_index = 0;
             end_packet_index = 0;
             udp_agent.Client.ReceiveTimeout = 5000;
+            
         }
 
         public int get_max_packet()
         {
-            int max_size = 1500;
+            int max_size = 1400;
             int val = max_size;
 
             if (target.AddressFamily == AddressFamily.InterNetwork)
             {
-                val -= 28;
+                //val -= 28;
+                val -= 40;
             }
 
             if (target.AddressFamily == AddressFamily.InterNetworkV6)
@@ -116,7 +120,8 @@ namespace File_test_server.workers
 
         public void send_file_found(byte[] msg, IPEndPoint target)
         {
-            Debug.WriteLine("Sending file found packet");
+
+            log_message("Sending file found packet");
             udp_agent.Send(msg, target);
 
         }
@@ -124,7 +129,7 @@ namespace File_test_server.workers
 
         public void prepare_transfer_data2()
         {
-            Debug.WriteLine("Creating client querier");
+            log_message("Creating client querier");
             //var qr = owner.create_querier_worker(data, complete_file_path);
             byte[] bytes = Array.Empty<byte>();
 
@@ -150,14 +155,20 @@ namespace File_test_server.workers
 
         public void send_packets()
         {
-
+            bool linux = OperatingSystem.IsLinux() || OperatingSystem.IsMacOS();
+            int reps = 0;
             foreach (s_packet packet in packets_to_send.GetConsumingEnumerable())
             {
                 udp_agent.Send(packet.data, packet.size, target);
                 ArrayPool<byte>.Shared.Return(packet.data);
+                if (linux && reps % 25 == 0)
+                {
+                    Thread.Sleep(1);
+                }
+                reps++;
             }
 
-            Console.WriteLine("All packets have been sent !");
+            log_message("All packets have been sent !");
 
 
         }
@@ -166,7 +177,9 @@ namespace File_test_server.workers
         {
             if (send_started) { return false; }
             send_started = true;
-            send_task = Task.Factory.StartNew(() => { send_packets(); });
+            log_message("Starting send_packets");
+            send_task = Task.Run(() => { send_packets(); });
+            
             return true;
         }
 
@@ -196,10 +209,16 @@ namespace File_test_server.workers
                     byte[] order_bytes = BitConverter.GetBytes(offset);
                     byte[] sum_bytes = BitConverter.GetBytes(i);
 
+
+                    int data_min = Math.Min(buffer.Length, ps);
+
+
                     Array.Copy(order_bytes, 0, packet, 0, 8);
                     Array.Copy(sum_bytes, 0, packet, 8, 8);
-                    Array.Copy(buffer, 0, packet, 16, buffer.Length);
+                    Array.Copy(buffer, 0, packet, 16, data_min);
 
+
+                    
                     /*s_packet sp = new s_packet();
                     sp.size = ps;
                     sp.data = packet;
@@ -221,15 +240,17 @@ namespace File_test_server.workers
             long ex1 = long.MaxValue;
 
             byte[] long_size = BitConverter.GetBytes(ex1);
-            Debug.WriteLine("long size");
-            Debug.WriteLine(long_size.Length);
+            log_message("long size");
+            log_message(long_size.Length.ToString());
             int mp = get_max_packet();
             long data_space = mp - (long_size.Length * 2);
             long offset = data_space * (begin_pos);
-
+            log_message("Data space length: " + data_space);
             //byte[] file_bytes = System.IO.File.ReadAllBytes(filepath);
             byte[] buffer = new byte[data_space];
 
+            Debug.WriteLine(begin_pos);
+            Debug.WriteLine(end_pos);
 
             int remaining_bytes = 0;
             using (FileStream fs = new FileStream(filepath, FileMode.Open, FileAccess.Read))
@@ -238,7 +259,11 @@ namespace File_test_server.workers
 
                 long a = 0;
                 long file_pos = 0;
-                fs.Seek(offset, SeekOrigin.Begin);
+                if (offset > 0) 
+                {
+                    fs.Seek(offset, SeekOrigin.Begin);
+                }
+                
 
                 while ((remaining_bytes = fs.Read(buffer, 0, buffer.Length)) > 0)
                 {
@@ -295,11 +320,15 @@ namespace File_test_server.workers
                         Console.WriteLine(fs.Position);
                     }*/
 
+                    Debug.WriteLine(a);
                     a++;
                     file_pos += remaining_bytes;
 
                     if(a>=end_pos)
                     {
+                        Debug.WriteLine("End position exited");
+                        Debug.WriteLine(a);
+                        Debug.WriteLine(end_pos);
                         break;
                     }
 
@@ -307,15 +336,17 @@ namespace File_test_server.workers
                     //packets_to_send2.Add(packet);
                     //remaining_bytes -= (packet.Length - 16);
                 }
+
+                log_message("File read done");
             }
 
 
-            Debug.WriteLine("All packets have been made !");
+            log_message("All packets have been made !");
             packets_to_send.CompleteAdding();
             send_task.Wait();
 
-            Debug.WriteLine("Remaining_bytes");
-            Debug.WriteLine(remaining_bytes);
+            log_message("Remaining_bytes");
+            log_message(remaining_bytes.ToString());
 
             sv_file_state = server_file_state.wait_confirmation;
 
@@ -323,9 +354,18 @@ namespace File_test_server.workers
 
         }
 
+        public void make_packet_range(string filepath, long start, long end)
+        {
+            for (long i = start; i < end; i++)
+            {
+                Debug.WriteLine(i);
+                make_single_packet(filepath, i);
+            }
+        }
+
         public void prepare_data_for_transfer(ref int tries)
         {
-            Debug.WriteLine("Preparing data for transfer");
+            log_message("Preparing data for transfer");
             
             byte[] bytes = Array.Empty<byte>();
 
@@ -340,10 +380,12 @@ namespace File_test_server.workers
 
             if (tries >=6 )
             {
-                Debug.WriteLine("Server did not request transfer to start");
+                log_message("Server did not request transfer to start");
                 sv_file_state = server_file_state.done;
                 return;
             }
+
+            IPEndPoint old_target = target;
 
 
             //string b_st = Encoding.ASCII.GetString(bytes, 0, bytes.Length);
@@ -358,35 +400,57 @@ namespace File_test_server.workers
                 var ips = Dns.GetHostAddresses(Dns.GetHostName())[0];
                 IPEndPoint ipe_test = new(ips, 1);
 
+                log_message("Recived order to send packets " + begin_packet_index.ToString() + " to " + end_packet_index.ToString());
+
                 if (IPEndPoint.TryParse(st_ipe, out ipe_test) && ipe_test != null)
                 {
                     target = ipe_test;
+                    target = new IPEndPoint(target.Address.MapToIPv4(),target.Port);
                     sv_file_state = server_file_state.transfer_file;
-                    begin();
+                    //begin();
                     
                 }
 
             }
+
+            Dictionary<string, object> conf = new();
+            conf["donex"] = true;
+            byte[] conf_bytes = Client_main.dict_to_bytes(conf);
+            udp_agent.Send(conf_bytes,target);
 
 
         }
 
         public void wait_confirm()
         {
-            Debug.WriteLine("Waiting for server confirmation");
+            log_message("Waiting for server confirmation");
             bool finish = false;
+            udp_agent.Client.ReceiveTimeout = 5000;
             while (!finish)
             {
-                byte[] bytes = udp_agent.Receive(ref trash);
+                byte[] bytes= Array.Empty<byte>();
+                try
+                {
+                   bytes = udp_agent.Receive(ref trash);
+                }
+                catch
+                {
+                    log_message("Error in transfer wait_confirm");
+                    continue;
+                }
                 Dictionary<string, object>? dict = Client_main.bytes_to_dict(bytes);
                 if (dict != null)
                 {
+                    log_message("Preparing to resend packet");
                     bool state = (bool)dict["done"];
                     if (state) { finish = true; break; }
 
-                    long pos = (long)dict["pos"];
+                    //long pos = (long)dict["pos"];
+                    long start = (long)dict["start"];
+                    long end = (long)dict["end"];
 
-                    make_single_packet(complete_file_path, pos);
+                    //make_single_packet(complete_file_path, pos);
+                    make_packet_range(complete_file_path, start, end);
                     //send_packets();
 
 
@@ -396,9 +460,9 @@ namespace File_test_server.workers
 
             }
 
-            Debug.WriteLine("Server has confirmed sucessful file transfer !");
+            log_message("Server has confirmed sucessful file transfer !");
 
-            sv_file_state = server_file_state.idle;
+            sv_file_state = server_file_state.done;
             //packets_to_send.Clear();
         }
 
@@ -454,6 +518,7 @@ namespace File_test_server.workers
                 }
                 Thread.Sleep(0);
             }
+            Dispose();
         }
 
 

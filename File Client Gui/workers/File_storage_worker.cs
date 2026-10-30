@@ -103,7 +103,15 @@ namespace File_Client_Gui.workers
         public void send_first_msg(byte[] data)
         {
             Debug.WriteLine("Sending first message");
-            udp_agent.Send(data,target);
+            try
+            {
+                udp_agent.SendAsync(data, target);
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("Error while sending first message:\n" + e.Message);
+                log_message(e.Message);
+            }
         }
 
         public override void begin()

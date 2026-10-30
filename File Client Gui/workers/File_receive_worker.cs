@@ -36,6 +36,19 @@ namespace File_test_client.workers
         file_done = 5,
         file_not_found = 6,
         file_error = 7,
+        unpaired=8,
+        conection_error=9,
+        file_repair = 10,
+
+
+    }
+
+    public enum server_file_rejection : int
+    {
+        not_found= 0,
+        lacking_credits=1,
+        lacking_ratio=2,
+        banned=3,
 
     }
 
@@ -64,8 +77,8 @@ namespace File_test_client.workers
         public int received_count;
 
         public bool ready_for_file;
-        public int filesize;
-        public int received_filesize;
+        public long filesize;
+        public long received_filesize;
         public BlockingCollection<w_packet> packets_to_write;
         
         public received_state r_state;
@@ -74,7 +87,7 @@ namespace File_test_client.workers
         public byte[] file_buffer;
         private delegate void file_status(string st);
         public Worker_task_info wti;
-        Worker_task_info wtx;
+        
         public List<packet_range> packets_received;
         public Stopwatch last_received_time;
         public bool build_started;
@@ -84,7 +97,13 @@ namespace File_test_client.workers
         public IncrementalHash gen_hash;
         public string target_hash;
         public string download_folder;
+
+        public Partial_file_registry? prf;
+
+        public Dictionary<string, object> packets_per_ip;
+
         
+
 
 
 
@@ -95,7 +114,7 @@ namespace File_test_client.workers
            
             if (packets_received.Any() ==false)
             {
-                //Debug.WriteLine("First range");
+                Debug.WriteLine("First range");
                 
                 packets_received.Add(new packet_range { begin=l,end=l});
             }
@@ -230,7 +249,7 @@ namespace File_test_client.workers
 
         public string get_hash_string()
         {
-            byte[] raw_hash = gen_hash.GetCurrentHash();
+            byte[] raw_hash = gen_hash.GetHashAndReset();
             string st = Convert.ToHexString(raw_hash, 0, raw_hash.Length);
             return st;
         }
@@ -239,6 +258,8 @@ namespace File_test_client.workers
         {
 
 
+
+            r_state = received_state.unpaired;
             bool allows_IPv6 = System.Net.Sockets.Socket.OSSupportsIPv6;
             if (allows_IPv6)
             {
@@ -262,8 +283,12 @@ namespace File_test_client.workers
            
             ready_for_file = false;
             received_filesize = 0;
-            udp_agent.AllowNatTraversal(true);
-            udp_agent.Client.ReceiveBufferSize = 1024 * 1024 * 2;
+            if (OperatingSystem.IsWindows())
+            {
+                udp_agent.AllowNatTraversal(true);
+            }
+                
+            udp_agent.Client.ReceiveBufferSize = 1024 * 1024 * 16;
             udp_agent.Client.ReceiveTimeout = 3000;
             packets_received = new();
             last_received_time = new();
@@ -272,6 +297,10 @@ namespace File_test_client.workers
             lock_x = new();
             gen_hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
             download_folder = String.Empty;
+            full_file_name = String.Empty;
+            download_folder = String.Empty ;
+            prf = null;
+            packets_per_ip = new();
 
         }
 
@@ -280,7 +309,7 @@ namespace File_test_client.workers
             wti = wt;
         }
 
-        public void ask_for_file()
+        /*public void ask_for_file()
         {
 
 
@@ -320,7 +349,7 @@ namespace File_test_client.workers
 
 
 
-        }
+        }*/
 
         public void ask_for_file2()
         {
@@ -347,9 +376,12 @@ namespace File_test_client.workers
             catch (Exception e)
             {
                 hit = false;
+                log_message("An error has ocurred in ask_for_file2:");
                 log_message("Error:");
                 log_message(e.Message);
                 change_file_status("Request could not be sent to the server");
+                r_state = received_state.conection_error;
+                return;
                 
             }
 
@@ -359,6 +391,37 @@ namespace File_test_client.workers
                 change_file_status("Request was sent to the server");
                 r_state = received_state.file_requested;
             }
+        }
+
+
+       
+        public void create_partial_file_registry()
+        {
+            prf = new Partial_file_registry(target_hash, download_folder + full_file_name, filesize);
+            prf.complete_filename = full_file_name;
+            prf.total_packets = packets_needed;
+            owner.add_partial_file(prf);
+            prf.update_pfi();
+        }
+
+
+        public void partial_file_setup()
+        {
+            if(prf == null) { return; }
+            target_hash = prf.hash;
+            filesize = prf.expected_size;
+
+            Dictionary<string, object> data = new();
+            data["type"] = 2;
+            data["hash"] = target_hash;
+            data["client_code"] = owner.client_code;
+            data["partial"] = true;
+
+            byte[] dataq  = Client_main.dict_to_bytes(data);
+
+            udp_agent.Send(dataq, target);
+
+
         }
 
         public void file_setup()
@@ -375,7 +438,7 @@ namespace File_test_client.workers
             }
             catch(Exception e)
             {
-                log_message("An error has ocurred in ask_for_file2:");
+                log_message("An error has ocurred in file_setup:");
                 r_state = received_state.file_error;
                 log_message(e.Message);
                 return;
@@ -391,11 +454,37 @@ namespace File_test_client.workers
 
             Dictionary<string, object>? dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(b_st);
 
+
+            //Rejection cases
             if (dict == null || !((bool)dict["found"]))
             {
+                if(dict==null)
+                {
+                    log_message("File not found or invalid answer!");
+                    return;
+                }
                 r_state = received_state.file_not_found;
-                Console.WriteLine("File not found or invalid answer!");
-                change_file_status("File was not found !");
+
+                server_file_rejection sfr = (server_file_rejection)(long)dict["reason"];
+
+                switch(sfr)
+                {
+                    case server_file_rejection.not_found:
+                        change_file_status("File was not found !");
+                        break;
+                    case server_file_rejection.lacking_credits:
+                        change_file_status("Insufficient credit to download this file !");
+                        break;
+                    case server_file_rejection.lacking_ratio:
+                        change_file_status("Insufficient ratio to download this file !");
+                        break;
+                    case server_file_rejection.banned:
+                        change_file_status("You are banned from connecting with the server !");
+                        break;
+                }
+
+                log_message("File not found, query rejected or invalid answer!");
+                //change_file_status("File was not found !");
                 return;
             }
 
@@ -426,12 +515,14 @@ namespace File_test_client.workers
             wti.Filesize = Client_main.bytesize_to_str( filesize );
 
 
-            bool do_download = Dispatcher.UIThread.InvokeAsync(async () =>
+            bool do_download = false;
+            Task<bool> download_task = Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 var dialog = new File_confirm();
                 var vm = new File_confirm_Model();
                 vm.Packets = packets_needed;
                 vm.File_name = full_file_name;
+                vm.File_size = Client_main.bytesize_to_str(filesize);
                 dialog.DataContext = vm;
 
                 bool res =  await dialog.ShowDialog<bool>(owner.main_window);
@@ -439,16 +530,56 @@ namespace File_test_client.workers
 
                 if(res)
                 {
-                    download_folder = vm.Folder_path + "\\";
+                    download_folder = vm.Folder_path + "/";
                 }
 
                 return res;
-            }).Result;
+            });
 
-            if(do_download)
+            //udp_agent.Client.ReceiveTimeout = 1000;
+            while (!download_task.IsCompleted)
             {
+                try
+                {
+                    //var trashx = udp_agent.Receive(ref trash);
+                    //Debug.WriteLine("Received message while waiting for download confirmation");
+                }
+                catch (SocketException)
+                {
+                    // Timeout occurred, continue waiting for the download task to complete
+                }
+
+                Thread.Sleep(0);
+            }
+
+            if(download_task.IsCompleted)
+            {
+                do_download = download_task.GetAwaiter().GetResult();
+            }
+           
+
+            //.Result
+
+            if (do_download)
+            {
+                create_partial_file_registry();
                 byte[] ack_bytes = Encoding.ASCII.GetBytes("ACK");
-                udp_agent.Send(ack_bytes, target);
+                log_message("Sending confirmation message to: ");
+                log_message(target.ToString());
+
+                try
+                {
+                    udp_agent.Send(ack_bytes, target);
+                }
+
+                catch(Exception e)
+                {
+                    log_message("Error sending confirmation message:");
+                    log_message(e.Message);
+                    r_state = received_state.file_error;
+                    return;
+                }
+
                 packets_to_write = new();
                 r_state = received_state.sever_answered;
                 log_message("File found");
@@ -471,12 +602,69 @@ namespace File_test_client.workers
 
         public void ask_for_missing()
         {
-            if(packets_received.Count <= 1) { return; }
+            if(packets_received.Any() && packets_received.Count <= 1 && received_all_packets()) 
+            {
+                log_message("Not enough packets received to request missing ones");
+                return; 
+            }
 
             Dictionary<string, object> dict = new();
             dict["done"] = false;
-            dict["pos"] = 0;
+            dict["start"] = 0;
+            dict["end"] = 1;
 
+            log_message("Packets_received Count: " + packets_received.Count);
+
+            if(!packets_received.Any())
+            {
+                dict["done"] = false;
+                dict["start"] = 0;
+                dict["end"] = packets_needed;
+                return;
+            }
+
+            
+            if(packets_received[0].begin > 0)
+            {
+                log_message("Requesting first packet");
+                byte[] resp = Client_main.dict_to_bytes(dict);
+                udp_agent.SendAsync(resp, target);
+            }
+
+            if (packets_received.Last().end < packets_needed - 1)
+            {
+                log_message("Requesting last packet");
+                dict["start"] = packets_needed - 1;
+                dict["end"] = packets_needed;
+                byte[] resp = Client_main.dict_to_bytes(dict);
+                udp_agent.SendAsync(resp, target);
+            }
+
+
+
+            if(packets_received.Count == 1)
+            {
+                if(packets_received[0].begin > 1)
+                {
+                    dict["start"] = 1;
+                    dict["end"] = packets_received[0].begin;
+                    byte[] resp = Client_main.dict_to_bytes(dict);
+                    udp_agent.SendAsync(resp, target);
+                }
+
+                if (packets_received[0].end < packets_needed - 1)
+                {
+                    dict["start"] = packets_received[0].end + 1;
+                    dict["end"] = packets_needed;
+                    byte[] resp = Client_main.dict_to_bytes(dict);
+                    udp_agent.SendAsync(resp, target);
+                }
+                return;
+            }
+
+
+            log_message("Requesting gap packets");
+            log_message((packets_received.Count - 1).ToString());
             for (int a=0;a<packets_received.Count-1;a++)
             {
                 packet_range p= packets_received[a];
@@ -484,7 +672,7 @@ namespace File_test_client.workers
 
                 if(p2.begin - p.end > 1)
                 {
-                    for(long b = p.end+1; b < p2.begin; b++)
+                    /*for(long b = p.end +1; b < p2.begin; b++)
                     {
                         dict["pos"] = b;
                         byte[] resp = Client_main.dict_to_bytes(dict);
@@ -492,9 +680,24 @@ namespace File_test_client.workers
                         {
                             udp_agent.SendAsync(resp,target);
                         }
+                    }*/
+
+                    dict["start"] = p.end + 1;
+                    dict["end"] = p2.begin;
+                    byte[] resp = Client_main.dict_to_bytes(dict);
+                    if (resp != null) 
+                    {
+                        udp_agent.SendAsync(resp,target);
                     }
                 }
+
+                
             }
+
+            /*foreach(packet_range p in packets_received)
+            {
+                log_message($"Tuple: {p.begin} - {p.end}");
+            }*/
         }
 
         public void register_file()
@@ -511,7 +714,19 @@ namespace File_test_client.workers
             owner.add_file_to_db(fr);
         }
 
-        
+        public void add_ip_addrs(string ip_addr)
+        {
+            
+            try
+            {
+                packets_per_ip[ip_addr] = (int)packets_per_ip[ip_addr]+1;
+            }
+            catch
+            {
+                packets_per_ip[ip_addr] = 0;
+                log_message("Adding ip addr: " + ip_addr);
+            }
+        }
 
         public void receive_file_data(Task file_write)
         {
@@ -522,6 +737,7 @@ namespace File_test_client.workers
 
             bool hit = false;
             int ps = 0;
+            udp_agent.Client.ReceiveTimeout = 3000;
 
             
 
@@ -565,11 +781,24 @@ namespace File_test_client.workers
                 last_received_time.Stop();
                 //long l_order = Convert.ToInt64(dict["order"]);
                 long l_order = BitConverter.ToInt64(file_buffer, 0);
-               
+
+
+
                 long l_pos = BitConverter.ToInt64(file_buffer, 8);
+
+                //log_message("Received packet with pos: " + l_pos);
+
+
+
 
                 int chunk_size = ps - 16;
                 //int pos = index;
+
+                if(chunk_size <= 0)
+                {
+                    log_message("Received packet with invalid chunk size, ignoring");
+                    return;
+                }
 
                 //byte[] file_data  = new byte[chunk_size];
                 byte[] file_data = ArrayPool<byte>.Shared.Rent(chunk_size);
@@ -604,6 +833,17 @@ namespace File_test_client.workers
                 var pr = (received_filesize / (float)filesize) * 100;
                 wti.Progress = MathF.Round(pr,2);
 
+
+                if(!ep.Equals(target) && !target.Equals(ep))
+                {
+                    string? adr = ep.ToString();
+                    if(adr!=null)
+                    {
+                        add_ip_addrs(adr);
+                    }
+                    
+                }
+
                 last_received_time.Restart();
 
                 //Console.WriteLine("Receiving file:");
@@ -627,7 +867,22 @@ namespace File_test_client.workers
                 build_started = false;
                 file_write.Wait();
                 file_write.Dispose();
-                FileInfo fileInfo = new FileInfo(download_folder + full_file_name);
+                FileInfo? fileInfo = null;
+                if (download_folder == String.Empty && full_file_name == String.Empty)
+                {
+                    if(prf == null) { throw new Exception("No file path available for hash generation!"); }
+                    fileInfo = new FileInfo(prf.path);
+                }
+                else
+                {
+                    fileInfo = new FileInfo(download_folder + full_file_name);
+                }
+                
+
+                if(fileInfo == null)
+                {
+                    throw new Exception("FileInfo was null, this should never be possible");
+                }
 
                 log_message("All packets were received!");
                 log_message("Transfer time (s): ");
@@ -639,7 +894,8 @@ namespace File_test_client.workers
 
                 log_message("Generated hash");
 
-                string h_st = get_hash_string();
+                //string h_st = get_hash_string();
+                string h_st = Client_main.generate_incremental_hash(download_folder + full_file_name);
                 Debug.WriteLine(h_st);
                 wti.Hash_match = (h_st==target_hash);
 
@@ -649,7 +905,12 @@ namespace File_test_client.workers
 
                 var jbytes = Client_main.dict_to_bytes(confm);
                 log_message("File transfer is done!");
-                udp_agent.Send(jbytes,target);
+
+                bool server_knows = false;
+               
+               
+                //udp_agent.Send(jbytes, target);
+
 
                 register_file();
 
@@ -658,14 +919,67 @@ namespace File_test_client.workers
                 received_filesize = 0;
                 
                 last_received_time.Restart();
+                if(prf!= null) { owner.remove_partial_file(prf); }
+                prf = null;
+
+                log_message("Telling server");
+                byte[] repsq = Array.Empty<byte>();
+                int attempts = 0;
+                while (!server_knows && attempts < 20)
+                {
+                    try
+                    {
+                        udp_agent.Send(jbytes, target);
+                        repsq = udp_agent.Receive(ref trash);
+                        if (repsq.Length > 0)
+                        {
+                            break;
+                        }
+                    }
+                    catch (Exception e) 
+                    {
+                        log_message("Server transfer confirm timeout");
+                    }
+                    Thread.Sleep(200);
+                    attempts++;
+                }
+
+                log_message("Server has received confirmation of the transfer end");
+
+                if (packets_per_ip.Count > 0 && attempts < 20)
+                {
+                    log_message("Informing server of packets sent per ip");
+                    //Debug.WriteLine(packets_per_ip.Keys);
+                    try
+                    {
+                        udp_agent.Receive(ref trash);
+                        byte[] pp_ip = Client_main.dict_to_bytes(packets_per_ip);
+                        udp_agent.Send(pp_ip, target);
+                    }
+                    catch (Exception e)
+                    {
+                        log_message("Error ocurred at end of file receive");
+                        log_message(e.ToString());
+                        
+                    }
+                }
+
 
 
 
             }
             else
             {
+                bool missing_in_order = false;
+                if(last_received_time.ElapsedMilliseconds >= 2000)
+                {
+                    if (!received_all_packets())
+                    {
+                        missing_in_order =true;
+                    }
+                }
                 //Debug.WriteLine(last_received_time.Elapsed);
-                if (skip_detected && last_received_time.ElapsedMilliseconds >= 2000)
+                if ((missing_in_order||skip_detected) && last_received_time.ElapsedMilliseconds >= 2000)
                 {
                     skip_detected = false;
                     last_received_time.Restart();
@@ -689,7 +1003,12 @@ namespace File_test_client.workers
             {
                 try
                 {
-                    using (FileStream fs = new FileStream(download_folder + full_file_name, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
+                    string full_path = download_folder + full_file_name;
+                    if(prf != null)
+                    {
+                        full_path = prf.path;
+                    }
+                    using (FileStream fs = new FileStream(full_path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
                     {
 
                         tries = 0;
@@ -739,9 +1058,133 @@ namespace File_test_client.workers
         public void start_file_builder()
         {
             if(build_started) { return; }
+            log_message("Starting file builder in File_receive");
             build_started = true;
-            builder_task = Task.Factory.StartNew(() => { build_file(); });
+            builder_task = Task.Run(() => { build_file(); });
             last_received_time.Start();
+        }
+
+
+        public string generate_chunk_hash(long start,long end)
+        {
+            gen_hash.GetHashAndReset();
+            long remaining = end - start + 1;
+            using (FileStream fs = new FileStream(prf.path, FileMode.Open, FileAccess.Read))
+            {
+                fs.Position = start;
+                
+                
+                while (remaining > 0)
+                {
+                    byte[] buffer = ArrayPool<byte>.Shared.Rent(1440);
+                    int read_size = (int)Math.Min(1440, remaining);
+                    int read = fs.Read(buffer, 0, read_size);
+                    if (read <= 0)
+                    {
+                        ArrayPool<byte>.Shared.Return(buffer);
+                        break;
+                    }
+                    gen_hash.AppendData(buffer, 0, read);
+                    remaining -= read;
+                    ArrayPool<byte>.Shared.Return(buffer);
+                }
+            }
+
+            byte[] raw_hash = gen_hash.GetHashAndReset();
+            string st = Convert.ToHexString(raw_hash, 0, raw_hash.Length);
+            return st;
+        }
+
+
+        public void repair_request()
+        {
+            if(prf == null) { return; }
+            Dictionary<string, object> dict = new();
+            dict["type"] = 7;
+            dict["hash"] = prf.hash;
+            dict["packets"] = packets_per_chunk();
+            dict["client_code"] = owner.client_code;
+
+            byte[] send = Client_main.dict_to_bytes(dict);
+            udp_agent.Send(send, target);
+        }
+
+        public long packets_per_chunk()
+        {
+            return Math.Min(1000, packets_needed / 16);
+        }
+
+        public void partial_file_repair()
+        {
+
+            log_message("Starting partial file repair for file with hash: " + prf.hash);
+            if(prf == null) { return; }
+            long packets_per_chunk = Math.Min(1000, packets_needed/16);
+            long reps = (packets_needed / 16);
+            reps += (packets_needed % 16 == 0) ? 0 : 1;
+            long remain = prf.expected_size;
+            long start = 0;
+
+            packets_received.Clear();
+
+            log_message("Checking " + reps + " chunks");
+
+            long correct_bytes = 0;
+
+            for (long a = 0; a < reps; a++)
+            {
+                long end = Math.Min(packets_per_chunk * 1440*(a+1), remain);
+                string hash = generate_chunk_hash(start, end);
+                remain = prf.expected_size - (packets_per_chunk * 1440);
+
+                Dictionary<string,object> dict = new();
+                dict["done"] = false;
+                dict["hash"] = hash;
+                dict["start"] = start; 
+                dict["end"]=end;
+
+                byte[] send_data = Client_main.dict_to_bytes(dict);
+                udp_agent.Send(send_data, target);
+
+
+                byte[] resp = udp_agent.Receive(ref trash);
+                Dictionary<string,object>? res_dict = Client_main.bytes_to_dict(resp);
+
+                if(res_dict != null && res_dict.ContainsKey("match") && (bool)res_dict["match"])
+                {
+                    //Chunk is correct, mark packets as received
+                    correct_bytes += end - start;
+                    long first_packet = a * packets_per_chunk;
+                    long last_packet = Math.Min((a + 1) * packets_per_chunk - 1, packets_needed - 1);
+                    last_packet += (end % 1440 == 0) ? 0 : 1;
+                    log_message($"Chunk is correct, marking packets from {first_packet} to {last_packet} as received");
+                    for (long p = first_packet; p <= last_packet; p++)
+                    {
+                        add_r_packet(p);
+                        
+                    }
+                }
+
+                start += end;
+
+            }
+
+            log_message("Packet counting done");
+
+            Dictionary<string, object> dictx = new();
+            dictx["done"] = true;
+            byte[] send_data2 = Client_main.dict_to_bytes(dictx);
+
+            udp_agent.Send(send_data2, target);
+
+            wti.Progress = (correct_bytes /((float)prf.expected_size) * 100);
+            wti.Progress = 0.3f;
+
+            r_state = received_state.sever_answered;
+
+            log_message("Requesting missing packets");
+            ask_for_missing();
+
         }
 
         public void file_receive_state_machine()
@@ -754,7 +1197,11 @@ namespace File_test_client.workers
                 {
                     case (received_state.file_requested):
                         {
-                            file_setup();
+                            if(prf==null)
+                            {
+                                file_setup();
+                            }
+                           
                             break;
                         }
 
@@ -804,21 +1251,58 @@ namespace File_test_client.workers
                             done = true;
                             break;
                         }
+
+                    case (received_state.unpaired):
+                        {
+                            change_file_status("Error ocurred in pairing! It will stop");
+                            log_message("Server pairing stopped because of an error");
+                            done = true;
+                            break;
+                        }
+
+                    case(received_state.conection_error):
+                        {
+                            change_file_status("Error ocurred in connection! It will stop");
+                            log_message("Connection stopped because of an error");
+                            done = true;
+                            break;
+                        }
+
+                    case(received_state.file_repair):
+                        {
+                            partial_file_repair();
+                            break;
+                        }
                 }
 
                 Thread.Sleep(0);
             }
 
+            log_message("Receive worker State machine has finished it's work");
+            Dispose();
+
         }
 
         public override void begin()
+        {
+            if(r_state==received_state.unpaired)
+            {
+                r_state = received_state.file_requested;
+            }
+            
+            file_receive_state_machine();
+
+        }
+
+        public override void pair_up_failed()
         {
             file_receive_state_machine();
         }
 
         public void change_file_status(string st)
         {
-            Dispatcher.UIThread.Post(() => owner.set_filestatus(st));
+            //Dispatcher.UIThread.Post(() => owner.set_filestatus(st));
+            wti.Status = st;
         }
 
     }

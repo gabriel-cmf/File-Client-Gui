@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using File_Client_Gui.data;
 using File_Client_Gui.ViewModels;
 using Newtonsoft.Json;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
 namespace File_Client_Gui.Views
@@ -17,6 +19,8 @@ namespace File_Client_Gui.Views
 
         public Client_main client_main;
         public FilePickerFileType file_picker_json;
+        public bool popup_open;
+        public bool force_close;
 
 
         public MainWindow()
@@ -30,6 +34,9 @@ namespace File_Client_Gui.Views
                 Patterns = new[] { "*.json" },
                 AppleUniformTypeIdentifiers = new[] { "public.json" },
             };
+
+            popup_open = false;
+            force_close = false;
 
 
 
@@ -66,8 +73,15 @@ namespace File_Client_Gui.Views
                 
                 client_main = vm.cm;
                 client_main.main_window = this;
-                client_main_init();
+                //client_main_init();
             }
+        }
+
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+            // Your initialization logic here
+            client_main_init();
         }
 
         public void set_file_status(string st)
@@ -94,6 +108,8 @@ namespace File_Client_Gui.Views
 
         public async void load_file_archive(object? sender, RoutedEventArgs e)
         {
+            //client_main.multi_file_test();
+            //return;
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) { return; }
 
@@ -124,7 +140,7 @@ namespace File_Client_Gui.Views
             }
         }
 
-        private void cm_get_file(object? sender, RoutedEventArgs e)
+        /*private void cm_get_file(object? sender, RoutedEventArgs e)
         {
 
             if (Filename.Text != null && File_ext.Text != null) 
@@ -134,14 +150,62 @@ namespace File_Client_Gui.Views
                 //client_main.create_file_receive_worker(Filename.Text,File_ext.Text);
             }
             
+        }*/
+
+        public async Task<bool> confirm_popup(string body, string yes, string no)
+        {
+            var conf_window = new Confirm_window();
+            var conf_vm = new Confirm_window_model();
+            conf_window.DataContext = conf_vm;
+            conf_vm.Body_text = body;
+            conf_vm.Button_yes_text = yes;
+            conf_vm.Button_no_text = no;
+            Debug.WriteLine("Showing confirmation popup");
+            var res = await conf_window.ShowDialog<bool>(this);
+
+            return res;
+
+
         }
 
-        protected override void OnClosing(WindowClosingEventArgs e)
+        protected override async void OnClosing(WindowClosingEventArgs e)
         {
-            client_main.shutdown_notify();
-            client_main.save_files();
-            client_main.save_servers();
-            base.OnClosing(e);
+
+            if (client_main.tasks.Count > 0 && !force_close)
+            {
+                e.Cancel = true;
+                Debug.WriteLine("There are ongoing tasks. Confirming exit.");
+                bool q = false;
+
+                if (!popup_open)
+                {
+                    popup_open = true;
+                    q = await confirm_popup("There are ongoing tasks. Are you sure you want to exit?", "Yes", "No");
+                    popup_open = false;
+                }
+
+
+                if (q)
+                {
+                    e.Cancel = false;
+                    force_close = true;
+                    Close();
+                }
+                else
+                {
+                    e.Cancel = true;
+                    base.OnClosing(e);
+                }
+
+            }
+            else 
+            {
+                client_main.shutdown_notify();
+                client_main.save_files();
+                client_main.save_servers();
+                base.OnClosing(e);
+            }
+            
         }
     }
 }

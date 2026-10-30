@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace File_Client_Gui.ViewModels
 {
-    public partial class File_confirm_Model : ObservableObject
+    public partial class File_confirm_Model : ViewModelBase
     {
 
         [ObservableProperty]
@@ -22,15 +22,18 @@ namespace File_Client_Gui.ViewModels
         [ObservableProperty]
         private long _packets;
 
+        [ObservableProperty]
+        private string _file_size;
 
-        public File_confirm_Model() 
+
+        public File_confirm_Model()
         {
 
             _folder_path = string.Empty;
-            _folder_found=false;
+            _folder_found = false;
             _file_name = string.Empty;
             _packets = 0;
+            _file_size = "";
         }
-
     }
 }

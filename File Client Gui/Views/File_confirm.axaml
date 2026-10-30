@@ -8,30 +8,38 @@
         x:Class="File_Client_Gui.File_confirm"
         x:DataType="viewmodels:File_confirm_Model"
         SizeToContent="WidthAndHeight"
-        Title="File_confirm">
+        Title="Confirm download">
   
 
 
   <StackPanel HorizontalAlignment="Stretch" Spacing="12">
-	  <TextBlock Margin="10,10,10,10">Hello!</TextBlock>
+	  <TextBlock Margin="10,10,10,10">Choose where to store the downloaded file:</TextBlock>
 
       <StackPanel Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
       <TextBox Margin="10,10,10,10" IsReadOnly="True" Watermark="Press the button to select the download folder" HorizontalAlignment="Stretch" Text="{Binding Folder_path}"></TextBox>
       <Button Margin="10,10,10,10" HorizontalAlignment="Right" Click="Choose_folder">Choose folder</Button>
       </StackPanel>
       <TextBlock Margin="10,10,10,10" Text="{Binding File_name}"></TextBlock>
+      
+
       <StackPanel Margin="10,10,10,10" Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
-          <TextBlock Margin="10,10,10,10">Packets: </TextBlock>
-           <TextBlock Margin="10,10,10,10" Text="{Binding Packets}"></TextBlock>
+          <TextBlock Margin="10,10,10,10">File name: </TextBlock>
+           <TextBlock Margin="10,10,10,10" Text="{Binding File_name}"></TextBlock>
+          </StackPanel>
+      
+
+
+      <StackPanel Margin="10,10,10,10" Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
+          <TextBlock Margin="10,10,10,10">Filesize: </TextBlock>
+           <TextBlock Margin="10,10,10,10" Text="{Binding File_size}"></TextBlock>
           </StackPanel>
 		  
-
 
       
 
       <StackPanel Margin="10,10,10,10" Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
       <Button Margin="10,10,10,10" IsEnabled="{Binding Folder_found}" HorizontalAlignment="Left" Click="Confirm">Download</Button>
-          <Button Margin="10,10,10,10" IsEnabled="{Binding Folder_found}" Click="Cancel" HorizontalAlignment="Right">Cancel</Button>
+          <Button Margin="10,10,10,10"  Click="Cancel" HorizontalAlignment="Right">Cancel</Button>
       </StackPanel>
          
   </StackPanel>

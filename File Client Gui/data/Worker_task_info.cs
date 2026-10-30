@@ -23,12 +23,16 @@ namespace File_Client_Gui.data
         [ObservableProperty]
         private bool hash_match;
 
+        [ObservableProperty]
+        private string status;
+
         public Worker_task_info() 
         {
             name="Task";
             filesize = "0 B";
             progress = 0;
             hash_match = false;
+            status = "Not started";
         }
 
 

@@ -1,0 +1,39 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewmodels="using:File_Client_Gui.ViewModels"
+
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="File_Client_Gui.Transfer_resume"
+        x:DataType="viewmodels:Transfer_resume_Model"
+        SizeToContent="WidthAndHeight"
+        Title="Info">
+
+        <StackPanel HorizontalAlignment="Stretch" Spacing="12">
+
+         <TextBlock Margin="10,10,10,10">The program was shutdown before all 
+         transfers were done, choose which ones you wish to resume:</TextBlock>
+         
+         <DataGrid Margin="20" ItemsSource="{Binding prfs }"
+				  
+				  GridLinesVisibility="All"
+				  BorderThickness="1" BorderBrush="Gray">
+
+                  <DataGrid.Columns>
+                  <DataGridTextColumn Header="Name" IsReadOnly="true" Binding="{Binding Path}" />
+                  <DataGridTextColumn Header="Filesize" IsReadOnly="true" Binding="{Binding File_size}" />
+                  <DataGridCheckBoxColumn Header="Continue ?" Binding="{Binding Selected}" />
+                  </DataGrid.Columns>
+         </DataGrid>
+         
+         <StackPanel Margin="10,10,10,10" Spacing="12" Orientation="Horizontal" HorizontalAlignment="Stretch">
+          <Button Margin="10,10,10,10"  HorizontalAlignment="Left" Click="Confirm">Resume transfers</Button>
+          <Button Margin="10,10,10,10" Click="Cancel" HorizontalAlignment="Right">Cancel</Button>
+          </StackPanel>
+
+         </StackPanel>
+
+
+
+</Window>

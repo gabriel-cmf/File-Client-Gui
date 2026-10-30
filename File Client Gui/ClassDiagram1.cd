@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="File_Client_Gui.data.File_registry" Collapsed="true">
+    <Position X="10" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EAAEAAAAAEAAQBAAkAAAAAQAAFIAQAAACAQAAAAAAAA=</HashCode>
+      <FileName>data\File_registry.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="fr_info" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="File_Client_Gui.data.File_registry_info" Collapsed="true">
+    <Position X="12.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAACAAAAAAAAAAAACAAAAAAAABA=</HashCode>
+      <FileName>data\File_registry_info.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.data.Server_registry" Collapsed="true">
+    <Position X="9.25" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAACAAAIAAAAAAAAAAQAAAAAAAAQAAAA=</HashCode>
+      <FileName>data\Server_registry.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.data.Worker_task_info" Collapsed="true">
+    <Position X="7.25" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAAAEAEAAAAAIAACAACAAA=</HashCode>
+      <FileName>data\Worker_task_info.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.ViewModels.File_confirm_Model" Collapsed="true">
+    <Position X="0.75" Y="5" Width="1.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAABAAEAAAAAAAAAAAAAAASAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\File_confirm_Model.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.ViewModels.File_edit_Model" Collapsed="true">
+    <Position X="4" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAEAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\File_edit_Model.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.ViewModels.MainWindowViewModel" Collapsed="true">
+    <Position X="2.25" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAQEAAAAAAAAAAAEAAgAAIAIAAQAAAA=</HashCode>
+      <FileName>ViewModels\MainWindowViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.ViewModels.ViewModelBase" Collapsed="true">
+    <Position X="2.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\ViewModelBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.File_confirm" Collapsed="true">
+    <Position X="7.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAQAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAA=</HashCode>
+      <FileName>Views\File_confirm.axaml.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.Views.MainWindow" Collapsed="true">
+    <Position X="6" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAACAABAABCAAAAAgAAAAAEAAAAAAAAAAAgAAAA=</HashCode>
+      <FileName>Views\MainWindow.axaml.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_test_client.workers.File_receive_worker" Collapsed="true">
+    <Position X="5.25" Y="1.75" Width="1.5" />
+    <NestedTypes>
+      <Delegate Name="File_test_client.workers.File_receive_worker.file_status" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>workers\File_receive_worker.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>EkAhAAAhShIAABIgAEEAAAAVMEACAQUigQIgAIAAIAA=</HashCode>
+      <FileName>workers\File_receive_worker.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="wti" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="File_test_client.workers.Worker_base" Collapsed="true">
+    <Position X="5.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAGAAgAAAIEAAAAgQIAAAAAAAAQIAAAAAAAA=</HashCode>
+      <FileName>workers\Worker_base.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="File_Client_Gui.workers.File_storage_worker" Collapsed="true">
+    <Position X="3.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACQAABIAIAAAAQAAAEAAAAEAAAAAAAAAA=</HashCode>
+      <FileName>workers\File_storage_worker.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_Client_Gui.workers.Logger_worker" Collapsed="true">
+    <Position X="7" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAEAAAABBAAAAAAAQAAAAAAAAAAAAAAAAAAE=</HashCode>
+      <FileName>workers\Logger_worker.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="File_test_server.workers.File_transfer_worker" Collapsed="true">
+    <Position X="1.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAAEAAigAICQAEIAEkAAwgQAAEEAhAAQAAQAABAAgA=</HashCode>
+      <FileName>workers\File_transfer_worker.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Client_main" Collapsed="true">
+    <Position X="9.25" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAQJAAAAAAIKAwBBAEmABAGgAgCAAFgAAAigADggAgA=</HashCode>
+      <FileName>Client_main.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="log_work" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Field Name="know_servers" />
+      <Field Name="file_dict" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Avalonia.Controls.Window" Collapsed="true">
+    <Position X="7" Y="4.75" Width="1.5" />
+    <TypeIdentifier />
+    <Lollipop Position="0.2" />
+  </Class>
+  <Struct Name="File_test_client.workers.w_packet" Collapsed="true">
+    <Position X="15.25" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACABAABAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAA=</HashCode>
+      <FileName>workers\File_receive_worker.cs</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="File_Client_Gui.workers.data_packet" Collapsed="true">
+    <Position X="11.75" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAQAAAAAAA=</HashCode>
+      <FileName>workers\File_storage_worker.cs</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="File_test_server.workers.s_packet" Collapsed="true">
+    <Position X="13.5" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAQAAAAAAA=</HashCode>
+      <FileName>workers\File_transfer_worker.cs</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Enum Name="File_test_client.workers.received_state" Collapsed="true">
+    <Position X="11.75" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAAAIAAAgAAAAAABABgAAAAAAABAABAAQAAA=</HashCode>
+      <FileName>workers\File_receive_worker.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="File_test_client.workers.server_file_rejection" Collapsed="true">
+    <Position X="13.5" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAABAAAAAAAAAAAAAAAAAAAAIAAAAgAAAAAAAA=</HashCode>
+      <FileName>workers\File_receive_worker.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="File_test_server.workers.server_file_state" Collapsed="true">
+    <Position X="15.25" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAQAAAQAAAAhAAAAAAAAAAACAAAAAAAAAAAAA=</HashCode>
+      <FileName>workers\File_transfer_worker.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="server_message_type" Collapsed="true">
+    <Position X="13.5" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAAAAAAAAAAACAAAAAEAAAAAAAAAAAAAgAAAg=</HashCode>
+      <FileName>Client_main.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="worker_tasks" Collapsed="true">
+    <Position X="11.75" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAEAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Udp_worker.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

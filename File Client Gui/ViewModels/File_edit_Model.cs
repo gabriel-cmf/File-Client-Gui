@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace File_Client_Gui.ViewModels
 {
-    public partial class File_edit_Model : ObservableObject
+    public partial class File_edit_Model : ViewModelBase
     {
         [ObservableProperty]
         private string _folder_path;
@@ -23,6 +23,6 @@ namespace File_Client_Gui.ViewModels
             folder_status = string.Empty;
         }
 
-        
+
     }
 }
